@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particlus | Ty</title>
+    <link rel="icon" type="image/png" href="favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sankofa+Display&display=swap" rel="stylesheet">
+ 
+    <style>
+
+        *{
+            font-family: "Sankofa Display", sans-serif !important;
+        }
+        body {
+            font-family: "Sankofa Display", sans-serif !important;
+            margin: 0;
+            padding: 0;
+            background-color: #0c0c1d;
+            color: #00ffff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .main-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            transition: all 0.3s ease;
+        }
+        .game-container {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        .overlay {
+            position: absolute;
+            padding: 8px;
+            background-color: rgba(12, 12, 29, 0.8);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            border: 1px solid #00ffff;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .stat-graph {
+            margin-top: 8px;
+        }
+        .graph-label {
+            font-size: 0.8rem;
+            color: rgba(0, 255, 255, 0.7);
+            margin-bottom: 4px;
+        }
+        #statsOverlay {
+            width: 200px;
+            padding: 12px;
+            bottom: 10px;
+            left: 10px;
+        }
+        .stat-value {
+            color: #00ffff;
+            font-weight: bold;
+            float: right;
+            margin-top: 2px;
+        }
+        .side-panel {
+            width: 250px;
+            background-color: rgba(26, 26, 58, 0.9);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: transform 0.3s ease, width 0.3s ease;
+            position: relative;
+        }
+        .side-panel.collapsed {
+            transform: translateX(100%);
+            width: 0;
+            padding: 0;
+        }
+        .toggle-panel {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(26, 26, 58, 0.9);
+            color: #00ffff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px 0 0 5px;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        .toggle-panel:hover {
+            background-color: rgba(0, 255, 255, 0.2);
+        }
+        .toggle-panel.collapsed {
+            transform: translateY(-50%) rotate(180deg);
+            border-radius: 0 5px 5px 0;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #1a1a3a;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background-color: #00ffff;
+            color: #1a1a3a;
+        }
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+            background-color: rgba(26, 26, 58, 0.8);
+            border-radius: 5px;
+            padding: 10px;
+            border: 1px solid #00ffff;
+        }
+        .theme-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .theme-option:hover {
+            transform: scale(1.1);
+        }
+        .theme-option.selected::after {
+            content: '✓';
+            color: white;
+            font-size: 24px;
+            text-shadow: 0 0 3px black;
+        }
+        .color-preview {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 -2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="statsOverlay" class="overlay">
+                <div class="stat-row">
+                    <span class="stat-label">Gen:</span>
+                    <span class="stat-value" id="generationCount">0</span>
+                </div>
+                <div class="stat-graph">
+                    <div class="graph-label">Population</div>
+                    <canvas id="populationGraph" width="150" height="40"></canvas>
+                    <span class="stat-value" id="populationCount">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="side-panel">
+            <button class="toggle-panel">◀</button>
+            <div class="controls">
+                <button id="startStopBtn">Start</button>
+                <button id="resetBtn">↺</button>
+                <input title="speed" type="range" id="speedControl" min="1" max="100" value="50">
+                <span id="speedValue">Speed: 50</span>
+            </div>
+            <div class="theme-selector" id="themeSelector"></div>
+        </div>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startStopBtn = document.getElementById('startStopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const generationCount = document.getElementById('generationCount');
+    const populationCount = document.getElementById('populationCount');
+    const sidePanel = document.querySelector('.side-panel');
+    const togglePanel = document.querySelector('.toggle-panel');
+    const speedControl = document.getElementById('speedControl');
+    const speedValue = document.getElementById('speedValue');
+
+    let width, height;
+    let isRunning = false;
+    let generation = 0;
+    let updateInterval = 30;
+    let particles = [];
+    let lastUpdateTime = 0;
+
+    const colorThemes = [
+            { name: 'Default', primary: '#00ffff', secondary: '#e94560', tertiary: '#c5ee4f', background: '#0c0c1d' },
+            { name: 'Neon Nights', primary: '#ff00ff', secondary: '#00ff00', tertiary: '#ffff00', background: '#000000' },
+            { name: 'Pastel Dream', primary: '#ffffff', secondary: '#bae1ff', tertiary: '#baffc9', background: '#32a5ba' },
+            { name: 'Cyber Punk', primary: '#f72585', secondary: '#4361ee', tertiary: '#4cc9f0', background: '#3a0ca3' },
+            { name: 'Forest', primary: '#2d6a4F', secondary: '#ffffff', tertiary: '#d8f3dc', background: '#1b4332' },
+            { name: 'Sunset', primary: '#ff7b00', secondary: '#ffb700', tertiary: '#ff006e', background: '#330033' },
+            { name: 'Ocean', primary: '#00b4d8', secondary: '#0077b6', tertiary: '#caf0f8', background: '#03045e' },
+            { name: 'Monochrome', primary: '#ffffff', secondary: '#cccccc', tertiary: '#666666', background: '#000000' }
+        ];
+
+    let currentTheme = colorThemes[0];
+
+        class ParticleDNA {
+            constructor() {
+                this.speed = Math.random() * 2 + 0.5;
+                this.senseRadius = Math.random() * 100 + 50;
+                this.attraction = Math.random() * 2 - 2;
+                this.repulsion = Math.random() * 2 - 1;
+                this.metabolism = Math.random() * 0.5 + 0.5;
+                this.reproductiveRate = Math.random() * 0.2;
+                
+                this.abilities = {
+                    canSplit: Math.random() < 0.2,
+                    canAbsorb: Math.random() < 0.3,
+                    emitsLight: Math.random() < 0.1,
+                    isAggressive: Math.random() < 0.15
+                };
+            }
+
+            mutate() {
+                const mutationRate = 0.1;
+                const mutateValue = (value, range = 0.2) => {
+                    if (Math.random() < mutationRate) {
+                        return value + (Math.random() - 0.5) * range;
+                    }
+                    return value;
+                };
+
+                this.speed = mutateValue(this.speed);
+                this.senseRadius = mutateValue(this.senseRadius, 20);
+                this.attraction = mutateValue(this.attraction);
+                this.repulsion = mutateValue(this.repulsion);
+                this.metabolism = mutateValue(this.metabolism, 0.1);
+                this.reproductiveRate = mutateValue(this.reproductiveRate, 0.05);
+
+                Object.keys(this.abilities).forEach(ability => {
+                    if (Math.random() < mutationRate) {
+                        this.abilities[ability] = !this.abilities[ability];
+                    }
+                });
+            }
+
+            crossover(otherDNA) {
+                const childDNA = new ParticleDNA();
+                const mixTrait = (trait) => {
+                    return Math.random() < 0.5 ? this[trait] : otherDNA[trait];
+                };
+
+                childDNA.speed = mixTrait('speed');
+                childDNA.senseRadius = mixTrait('senseRadius');
+                childDNA.attraction = mixTrait('attraction');
+                childDNA.repulsion = mixTrait('repulsion');
+                childDNA.metabolism = mixTrait('metabolism');
+                childDNA.reproductiveRate = mixTrait('reproductiveRate');
+
+                Object.keys(this.abilities).forEach(ability => {
+                    childDNA.abilities[ability] = Math.random() < 0.5 ? 
+                        this.abilities[ability] : 
+                        otherDNA.abilities[ability];
+                });
+
+                return childDNA;
+            }
+        }
+        
+        class Particle {
+            constructor(x, y, dna = null) {
+                // position and movement
+                this.x = x;
+                this.y = y;
+                this.dna = dna || new ParticleDNA();
+                this.vx = (Math.random() - 0.5) * this.dna.speed;
+                this.vy = (Math.random() - 0.5) * this.dna.speed;
+                
+                // physical properties
+                this.radius = Math.random() * 3 + 2;
+                this.maxLife = 100 + (this.dna.metabolism * 100);
+                this.life = this.maxLife;
+                this.generation = 0;
+                this.energy = 100;
+                this.reproductiveEnergy = 0;
+                
+                // visual properties
+                this.color = currentTheme.primary;
+                this.trailPoints = [{x: x, y: y}];
+                this.maxTrailLength = 12;
+                this.glowIntensity = 0;
+                this.pulsePhase = Math.random() * Math.PI * 3;
+                
+                
+
+                // state tracking
+                this.age = 0;
+                this.lastReproduction = 0;
+                this.timeAlive = 0;
+                this.mutations = 0;
+                this.successfulInteractions = 0;
+            }
+
+            update(particles) {
+                this.timeAlive++;
+                this.age++;
+
+                let acceleration = this.calculateAcceleration(particles);
+                this.vx += acceleration.x;
+                this.vy += acceleration.y;
+
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (currentSpeed > this.dna.speed) {
+                    const ratio = this.dna.speed / currentSpeed;
+                    this.vx *= ratio;
+                    this.vy *= ratio;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+            
+                this.handleEnvironmentalEffects();
+            
+                this.updateVisualEffects();
+            
+                this.handleBoundaries();
+            
+                this.handleParticleInteractions(particles);
+            
+                this.updateLifeCycle();
+            
+                return this.life > 0 && this.energy > 0;
+            }
+
+            updateLifeCycle() {
+                this.life -= this.dna.metabolism * 0.05;
+
+                if (this.age > 1000) {
+                    this.life -= 0.1 * (this.age / 1000);
+                }
+
+                if (this.energy < 100) {
+                    this.energy += this.dna.metabolism * 0.2;
+                }
+
+                if (this.energy > 20) {
+                    this.reproductiveEnergy += this.dna.reproductiveRate;
+                }
+
+                if (this.radius > 8) {
+                    this.energy -= this.radius * 0.01;
+                }
+
+                const genPenalty = Math.max(0, this.generation - 5) * 0.01;
+                this.life -= genPenalty;
+
+                if (this.successfulInteractions > 0) {
+                    this.energy += 0.01 * this.successfulInteractions;
+                    this.successfulInteractions *= 0.99;
+                }
+
+                if (this.mutations > 10) {
+                    this.life -= 0.01 * (this.mutations - 10);
+                }
+
+                this.energy = Math.min(100, Math.max(0, this.energy));
+                this.life = Math.min(this.maxLife, Math.max(0, this.life));
+            }
+
+            calculateAcceleration(particles) {
+                let ax = 0;
+                let ay = 0;
+                
+                particles.forEach(other => {
+                    if (other !== this) {
+                        const dx = other.x - this.x;
+                        const dy = other.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < this.dna.senseRadius && distance > 0) {
+                            const force = this.calculateInteractionForce(other, distance);
+                            const angle = Math.atan2(dy, dx);
+                            
+                            ax += Math.cos(angle) * force;
+                            ay += Math.sin(angle) * force;
+                        }
+                    }
+                });
+
+                ax += (Math.random() - 0.5) * 0.1 * this.dna.speed;
+                ay += (Math.random() - 0.5) * 0.1 * this.dna.speed;
+
+                return {x: ax, y: ay};
+            }
+
+            handleEnvironmentalEffects() {
+                // drag
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                // energy consumption
+                const speedCost = (this.vx * this.vx + this.vy * this.vy) * 0.01;
+                const sizeCost = this.radius * 0.01;
+                this.energy -= (this.dna.metabolism + speedCost + sizeCost);
+
+                // recovery from environment
+                if (this.energy < 100) {
+                    this.energy += this.dna.metabolism * 0.9;
+                }
+            }
+            calculateInteractionForce(other, distance) {
+                let force = 0;
+                const normalizedDistance = distance / this.dna.senseRadius;
+
+                force += (this.dna.attraction - normalizedDistance) * 0.05;
+                force -= this.dna.repulsion * (1 - normalizedDistance) * 0.03;
+
+                const genDiff = Math.abs(this.generation - other.generation);
+                force += (genDiff > 2 ? -0.02 : 0.02);
+
+                if (this.dna.abilities.isAggressive) {
+                    force *= 1.5;
+                }
+
+                const energyRatio = this.energy / other.energy;
+                force *= Math.min(2, Math.max(0.5, energyRatio));
+
+                force += (Math.random() - 0.5) * 0.01;
+
+                return force;
+            }
+
+            handleProximityEffect(other, distance) {
+
+                if (distance < this.dna.senseRadius * 0.5) {
+                    if (this.energy > other.energy) {
+                        const energyTransfer = (this.energy - other.energy) * 0.01;
+                        this.energy -= energyTransfer;
+                        other.energy += energyTransfer;
+                    }
+
+                    // knowledge transfer
+                    if (this.mutations > other.mutations && Math.random() < 0.1) {
+                        other.dna.mutate();
+                        other.mutations++;
+                    }
+                }
+            }
+            updateVisualEffects() {
+                if (this.generation > 2 || this.dna.abilities.emitsLight) {
+                    const lastPoint = this.trailPoints[0];
+                    const dx = this.x - lastPoint.x;
+                    const dy = this.y - lastPoint.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    const maxAllowedDistance = width * 0.01;
+                    if (distance > 2 && distance < maxAllowedDistance) {
+                        this.trailPoints.unshift({
+                            x: this.x,
+                            y: this.y,
+                            intensity: this.glowIntensity
+                        });
+
+                        if (this.trailPoints.length > this.maxTrailLength) {
+                            this.trailPoints.pop();
+                        }
+                    } else if (distance >= maxAllowedDistance) {
+                        this.trailPoints = [{x: this.x, y: this.y}];
+                    }
+                }
+                
+                // glow effect
+                if (this.dna.abilities.emitsLight) {
+                
+                    this.pulsePhase += 0.001;
+                    this.glowIntensity = 0.00002 + 0.00002 * Math.sin(this.pulsePhase);
+                }
+            }
+
+            handleBoundaries() {
+                const margin = this.radius * 2;
+                
+                if (this.x < -margin) this.x = width + margin;
+                if (this.x > width + margin) this.x = -margin;
+                if (this.y < -margin) this.y = height + margin;
+                if (this.y > height + margin) this.y = -margin;
+            }
+
+            handleParticleInteractions(particles) {
+                particles.forEach(other => {
+                    if (other !== this) {
+                        const dx = other.x - this.x;
+                        const dy = other.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < this.radius + other.radius) {
+                            this.handleCollision(other);
+                        } else if (distance < this.dna.senseRadius) {
+                            this.handleProximityEffect(other, distance);
+                        }
+                    }
+                });
+            }
+
+            handleCollision(other) {
+                if (this.dna.abilities.canAbsorb && this.radius > other.radius) {
+                    this.absorb(other);
+                }
+
+                if (this.dna.abilities.isAggressive) {
+                    this.attack(other);
+                }
+
+                if (this.canReproduce() && other.canReproduce()) {
+                    this.reproduce(other);
+                }
+
+                if (this.dna.abilities.canSplit && this.radius > 5) {
+                    this.tryToSplit();
+                }
+            }
+
+            absorb(other) {
+                const energyGain = other.energy * 0.5;
+                this.energy = Math.min(100, this.energy + energyGain);
+                this.radius += other.radius * 0.2;
+                this.mutations++;
+                other.life = 0;
+            }
+
+            attack(other) {
+                if (other.generation < this.generation) {
+                    const damage = this.radius * 0.5;
+                    other.energy -= damage;
+                    this.energy += damage * 0.3;
+                    this.successfulInteractions++;
+                }
+            }
+
+            canReproduce() {
+                return this.reproductiveEnergy > 20 && 
+                    this.energy > 70 && 
+                    this.timeAlive - this.lastReproduction > 100;
+            }
+
+            reproduce(other) {
+                if (particles.length < 300) {
+                    const childDNA = this.dna.crossover(other.dna);
+                    childDNA.mutate();
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = this.radius * 2;
+                    
+                    const child = new Particle(
+                        this.x + Math.cos(angle) * distance,
+                        this.y + Math.sin(angle) * distance,
+                        childDNA
+                    );
+                    
+                    child.generation = Math.max(this.generation, other.generation) + 1;
+                    child.radius = (this.radius + other.radius) * 0.4;
+                    particles.push(child);
+
+                    this.reproductiveEnergy = 0;
+                    this.energy *= 0.9;
+                    this.lastReproduction = this.timeAlive;
+                    this.successfulInteractions++;
+                }
+            }
+
+            tryToSplit() {
+                if (Math.random() < 0.01 && particles.length < 300) {
+                    const splitDNA = new ParticleDNA();
+                    splitDNA.mutate();
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = this.radius * 2;
+
+                    const splitParticle = new Particle(
+                        this.x + Math.cos(angle) * distance,
+                        this.y + Math.sin(angle) * distance,
+                        splitDNA
+                    );
+
+                    splitParticle.generation = this.generation;
+                    splitParticle.radius = this.radius * 0.6;
+                    particles.push(splitParticle);
+
+                    this.radius *= 0.7;
+                    this.energy *= 0.6;
+                }
+            }
+
+            draw(ctx) {
+                if (this.trailPoints && this.trailPoints.length > 1 && 
+                    (this.generation > 2 || this.dna.abilities.emitsLight)) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.trailPoints[0].x, this.trailPoints[0].y);
+                    
+                    for (let i = 1; i < this.trailPoints.length; i++) {
+                        const point = this.trailPoints[i];
+                        if (point) {
+                            ctx.lineTo(point.x, point.y);
+                        }
+                    }
+                    
+                    const gradient = ctx.createLinearGradient(
+                        this.trailPoints[0].x, this.trailPoints[0].y,
+                        this.trailPoints[this.trailPoints.length - 1].x,
+                        this.trailPoints[this.trailPoints.length - 1].y
+                    );
+
+                    gradient.addColorStop(0, this.color + 'ff');
+                    gradient.addColorStop(1, this.color + '00');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = this.radius * 0.5;
+                    ctx.stroke();
+                }
+
+                if (this.dna.abilities.emitsLight) {
+                    const glowRadius = this.radius * (2 + this.glowIntensity);
+                    const gradient = ctx.createRadialGradient(
+                        this.x, this.y, 0,
+                        this.x, this.y, glowRadius
+                    );
+                    gradient.addColorStop(0, this.color + '40');
+                    gradient.addColorStop(1, this.color + '00');
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+
+                // main particle body
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                // generation and ability indicators
+                if (this.generation > 0) {
+                    ctx.strokeStyle = currentTheme.tertiary;
+                    ctx.lineWidth = 0;
+                    ctx.stroke();
+
+                    if (Object.values(this.dna.abilities).some(v => v)) {
+                        const angle = Math.PI * 2 / Object.keys(this.dna.abilities).length;
+                        Object.entries(this.dna.abilities).forEach(([ability, active], i) => {
+                            if (active) {
+                                const x = this.x + Math.cos(angle * i) * (this.radius + 2);
+                                const y = this.y + Math.sin(angle * i) * (this.radius + 2);
+                                ctx.beginPath();
+                                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                                ctx.fillStyle = currentTheme.tertiary;
+                                ctx.fill();
+                            }
+                        });
+                    }
+                }
+
+                // energy indicator
+                if (this.energy < 50) {
+                    const energyRatio = this.energy / 100;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 2 * energyRatio);
+                    ctx.strokeStyle = currentTheme.secondary + '80';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            updateColor() {
+                const lifeRatio = this.life / this.maxLife;
+                const energyRatio = this.energy / 100;
+                
+                // color interpolation
+                this.color = interpolateColor(
+                    currentTheme.secondary,
+                    currentTheme.primary,
+                    lifeRatio * energyRatio
+                );
+
+                // age
+                if (this.age > 500) {
+                    this.color = interpolateColor(
+                        this.color,
+                        currentTheme.tertiary,
+                        Math.min(1, (this.age - 500) / 500)
+                    );
+                }
+
+                // special ability
+                if (this.dna.abilities.emitsLight) {
+                    this.color = interpolateColor(
+                        this.color,
+                        currentTheme.tertiary,
+                        0.3 + 0.2 * this.glowIntensity
+                    );
+                }
+            }
+        }
+        
+        function interpolateColor(color1, color2, factor) {
+                const result = color1.slice(1).match(/.{2}/g).map((hex, i) => {
+                    const rgb1 = parseInt(hex, 16);
+                    const rgb2 = parseInt(color2.slice(1).match(/.{2}/g)[i], 16);
+                    const interpolated = Math.round(rgb1 + (rgb2 - rgb1) * factor);
+                    return interpolated.toString(16).padStart(2, '0');
+                });
+                return `#${result.join('')}`;
+            }
+
+        function initThemeSelector() {
+                const themeSelector = document.getElementById('themeSelector');
+                themeSelector.innerHTML = '';
+                colorThemes.forEach((theme, index) => {
+                    const themeOption = document.createElement('div');
+                    themeOption.className = 'theme-option';
+                    themeOption.style.backgroundColor = theme.background;
+                    themeOption.innerHTML = `
+                        <div class="color-preview" style="background-color: ${theme.primary}"></div>
+                        <div class="color-preview" style="background-color: ${theme.secondary}"></div>
+                        <div class="color-preview" style="background-color: ${theme.tertiary}"></div>
+                    `;
+                    themeOption.addEventListener('click', () => selectTheme(index));
+                    themeSelector.appendChild(themeOption);
+                });
+                updateSelectedTheme();
+            }
+
+        function selectTheme(index) {
+                currentTheme = colorThemes[index];
+                updateSelectedTheme();
+                updateGameColors();
+            }
+
+        function updateSelectedTheme() {
+                const themeOptions = document.querySelectorAll('.theme-option');
+                themeOptions.forEach((option, index) => {
+                    option.classList.toggle('selected', colorThemes[index] === currentTheme);
+                });
+            }
+
+        function updateGameColors() {
+            document.body.style.backgroundColor = currentTheme.background;
+            document.body.style.color = currentTheme.primary;
+        }
+
+        function resizeCanvas() {
+            const mainContainer = document.querySelector('.main-container');
+            canvas.width = mainContainer.clientWidth;
+            canvas.height = mainContainer.clientHeight;
+            width = canvas.width;
+            height = canvas.height;
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 500; i++) {
+                particles.push(new Particle(
+                    Math.random() * width,
+                    Math.random() * height
+                ));
+            }
+            generation = 0;
+            updateStats();
+        }
+
+        function updateStats() {
+            const maxDataPoints = 50;
+
+            if (!window.statHistory) {
+                window.statHistory = {
+                    population: new Array(maxDataPoints).fill(0)
+                };
+            }
+
+    const maxGeneration = particles.length > 0 
+        ? Math.max(...particles.map(p => p.generation))
+        : 0;
+    generation = Math.max(generation, maxGeneration);
+    generationCount.textContent = generation;
+
+    // population stats
+    populationCount.textContent = particles.length;
+    statHistory.population.push(particles.length);
+    if (statHistory.population.length > maxDataPoints) {
+        statHistory.population.shift();
+    }
+
+    // population graph
+    const popCanvas = document.getElementById('populationGraph');
+    const popCtx = popCanvas.getContext('2d');
+    drawGraph(popCtx, statHistory.population, currentTheme.secondary);
+}
+
+        function drawGraph(ctx, data, color) {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            const maxValue = Math.max(...data) || 1;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+            
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+
+            data.forEach((value, index) => {
+                const x = (index / (data.length - 1)) * width;
+                const y = height - (value / maxValue) * height;
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+            ctx.fillStyle = color + '20';
+            ctx.fill();
+        }
+
+        function update() {
+        particles = particles.filter(particle => particle.update(particles));
+            
+        // pop limit
+        if (particles.length < 250) {
+            for (let i = 0; i < 5; i++) {
+                particles.push(new Particle(
+                    Math.random() * width,
+                    Math.random() * height
+                ));
+            }
+        }
+
+        // stats
+        if (generation % 1 === 0) {
+            updateStats();
+        }
+        generation++;
+    }
+
+        function draw() {
+            ctx.fillStyle = currentTheme.background + '20';
+            ctx.fillRect(0, 0, width, height);
+
+            // particles
+            particles.forEach(particle => particle.draw(ctx));
+        }  particles.forEach(particle => particle.draw(ctx));          
+
+        function gameLoop(timestamp) {
+            if (!lastUpdateTime) lastUpdateTime = timestamp;
+            const elapsed = timestamp - lastUpdateTime;
+
+            if (elapsed > updateInterval) {
+                update();
+                draw();
+                lastUpdateTime = timestamp;
+            }
+
+            if (isRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // mouse interaction
+        let isMouseDown = false;
+        let lastMouseX = null;
+        let lastMouseY = null;
+
+        function handleMouseInteraction(e) {
+            const rect = canvas.getBoundingClientRect();
+            const currentX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+            const currentY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+            
+            if (lastMouseX !== null && lastMouseY !== null) {
+                const distance = Math.sqrt(
+                    Math.pow(currentX - lastMouseX, 2) + 
+                    Math.pow(currentY - lastMouseY, 2)
+                );
+                
+                const steps = Math.max(1, Math.floor(distance / 10));
+                
+                for (let i = 0; i <= steps; i++) {
+                    const progress = i / steps;
+                    const x = lastMouseX + (currentX - lastMouseX) * progress;
+                    const y = lastMouseY + (currentY - lastMouseY) * progress;
+                    
+                    particles.push(new Particle(x, y));
+                }
+            }
+            
+            lastMouseX = currentX;
+            lastMouseY = currentY;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            const rect = canvas.getBoundingClientRect();
+            lastMouseX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+            lastMouseY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+            handleMouseInteraction(e);
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                handleMouseInteraction(e);
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            lastMouseX = null;
+            lastMouseY = null;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isMouseDown = false;
+            lastMouseX = null;
+            lastMouseY = null;
+        });
+
+        togglePanel.addEventListener('click', () => {
+            sidePanel.classList.toggle('collapsed');
+            togglePanel.classList.toggle('collapsed');
+            resizeCanvas();
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+
+        startStopBtn.addEventListener('click', () => {
+            isRunning = !isRunning;
+            startStopBtn.textContent = isRunning ? 'Stop' : 'Start';
+            if (isRunning) {
+                lastUpdateTime = 0;
+                requestAnimationFrame(gameLoop);
+            }
+        });
+
+        speedControl.addEventListener('input', () => {
+            updateInterval = 100 - speedControl.value;
+            speedValue.textContent = `Speed: ${speedControl.value}`;
+        });
+
+        resetBtn.addEventListener('click', initParticles);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.statHistory = {
+                population: new Array(50).fill(0)
+            };
+            
+            initThemeSelector();
+            resizeCanvas();
+            initParticles();
+        });
+   
+    </script>
+</body>
+</html>
