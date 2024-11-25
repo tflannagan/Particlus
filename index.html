@@ -73,6 +73,14 @@
             bottom: 10px;
             left: 10px;
         }
+        #statsOverlay.hidden {
+            display: none;
+        }
+        
+        #toggleStatsBtn {
+            width: 100%;
+            margin-top: 10px;
+        }
         .stat-value {
             color: #00ffff;
             font-weight: bold;
@@ -196,7 +204,8 @@
                 <button id="startStopBtn">Start</button>
                 <button id="resetBtn">↺</button>
                 <input title="speed" type="range" id="speedControl" min="1" max="100" value="50">
-                <span id="speedValue">Speed: 50</span>
+                <span id="speedValue">50</span>
+                <button id="toggleStatsBtn">Hide Stats</button>
             </div>
             <div class="theme-selector" id="themeSelector"></div>
         </div>
@@ -760,6 +769,18 @@
                 updateSelectedTheme();
             }
 
+        function initStatsToggle() {
+                const toggleStatsBtn = document.getElementById('toggleStatsBtn');
+                const statsOverlay = document.getElementById('statsOverlay');
+                let statsVisible = true;
+            
+                toggleStatsBtn.addEventListener('click', () => {
+                    statsVisible = !statsVisible;
+                    statsOverlay.classList.toggle('hidden', !statsVisible);
+                    toggleStatsBtn.textContent = statsVisible ? 'Hide Stats' : 'Show Stats';
+                });
+            }
+
         function selectTheme(index) {
                 currentTheme = colorThemes[index];
                 updateSelectedTheme();
@@ -977,7 +998,7 @@
 
         speedControl.addEventListener('input', () => {
             updateInterval = 100 - speedControl.value;
-            speedValue.textContent = `Speed: ${speedControl.value}`;
+            speedValue.textContent = `${speedControl.value}`;
         });
 
         resetBtn.addEventListener('click', initParticles);
@@ -990,6 +1011,7 @@
             initThemeSelector();
             resizeCanvas();
             initParticles();
+            initStatsToggle();
         });
    
     </script>
