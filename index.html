@@ -7,178 +7,275 @@
     <link rel="icon" type="image/png" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sankofa+Display&display=swap" rel="stylesheet">
- 
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
     <style>
-
-        *{
-            font-family: "Sankofa Display", sans-serif !important;
-        }
-        body {
-            font-family: "Sankofa Display", sans-serif !important;
+        * {
             margin: 0;
             padding: 0;
-            background-color: #0c0c1d;
-            color: #00ffff;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-        .main-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            transition: all 0.3s ease;
-        }
-        .game-container {
-            position: relative;
-            flex: 1;
-            overflow: hidden;
-        }
-        #gameCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 5px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        }
-        .overlay {
-            position: absolute;
-            padding: 8px;
-            background-color: rgba(12, 12, 29, 0.8);
-            border-radius: 5px;
-            font-size: 0.9rem;
-            border: 1px solid #00ffff;
-        }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .stat-graph {
-            margin-top: 8px;
-        }
-        .graph-label {
-            font-size: 0.8rem;
-            color: rgba(0, 255, 255, 0.7);
-            margin-bottom: 4px;
-        }
-        #statsOverlay {
-            width: 200px;
-            padding: 12px;
-            bottom: 10px;
-            left: 10px;
-        }
-        #statsOverlay.hidden {
-            display: none;
-        }
-        
-        #toggleStatsBtn {
-            width: 100%;
-            margin-top: 10px;
-        }
-        .stat-value {
-            color: #00ffff;
-            font-weight: bold;
-            float: right;
-            margin-top: 2px;
-        }
-        .side-panel {
-            width: 250px;
-            background-color: rgba(26, 26, 58, 0.9);
-            padding: 20px;
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            transition: transform 0.3s ease, width 0.3s ease;
-            position: relative;
+            font-family: "Quicksand", sans-serif !important;
+            touch-action: none;
         }
-        .side-panel.collapsed {
-            transform: translateX(100%);
-            width: 0;
-            padding: 0;
-        }
-        .toggle-panel {
-            position: absolute;
-            left: -30px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(26, 26, 58, 0.9);
-            color: #00ffff;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px 0 0 5px;
-            transition: transform 0.3s ease;
-            z-index: 10;
-        }
-        .toggle-panel:hover {
-            background-color: rgba(0, 255, 255, 0.2);
-        }
-        .toggle-panel.collapsed {
-            transform: translateY(-50%) rotate(180deg);
-            border-radius: 0 5px 5px 0;
-        }
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        button {
-            padding: 10px 15px;
-            cursor: pointer;
-            background-color: #1a1a3a;
-            color: #00ffff;
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        button:hover {
-            background-color: #00ffff;
-            color: #1a1a3a;
-        }
-        .theme-selector {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-            margin-top: 10px;
-            background-color: rgba(26, 26, 58, 0.8);
-            border-radius: 5px;
-            padding: 10px;
-            border: 1px solid #00ffff;
-        }
-        .theme-option {
-            width: 40px;
-            height: 40px;
-            border-radius: 5px;
-            cursor: pointer;
+
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.2s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            overflow: hidden;
         }
+
+        .main-container {
+            width: 100%;
+            height: 100vh;
+            max-height: 96vh;
+            background: #2a2a2a;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            padding: 10px;
+            gap: 0px;
+            position: relative;
+        }
+
+        .game-container {
+            position: relative;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            touch-action: none;
+        }
+
+        .overlay {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #statsOverlay {
+            bottom: 10px;
+            left: 10px;
+            width: 200px;
+        }
+
+        .side-panel {
+            position: relative;
+            background: #222;
+            border-radius: 15px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+            width: 250px;
+            transition: all 0.3s ease;
+            overflow: visible;
+        }
+
+        .side-panel.collapsed {
+            width: 0;
+            padding: 0;
+            margin: 0;
+            gap: 0px;
+        }
+
+        .side-panel.collapsed .control-group,
+        .side-panel.collapsed .theme-selector {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .side-panel.collapsed .toggle-panel {
+            right: calc(100% + 40px);
+        }
+
+        .toggle-panel {
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2a2a2a;
+            border: none;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            visibility: visible !important;
+        }
+
+        .toggle-panel:hover {
+            background: #333;
+        }
+
+        .action-button {
+            background: #2a2a2a;
+            border: none;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .action-button svg {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: #333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            width: 100%;
+        }
+
+        #speedControl {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            outline: none;
+            margin: 10px 0;
+        }
+
+        #speedControl::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+            height: auto;
+            width: 100%;
+        }
+
+        .theme-option {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px;
+            background: #2a2a2a;
+        }
+
         .theme-option:hover {
             transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }
-        .theme-option.selected::after {
-            content: '✓';
-            color: white;
-            font-size: 24px;
-            text-shadow: 0 0 3px black;
+
+        .theme-option.selected {
+            border-color: #fff;
         }
-        .color-preview {
-            width: 12px;
-            height: 12px;
+
+        .theme-option .color-preview {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            margin: 0 -2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-graph {
+            margin-top: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .side-panel {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                width: auto;
+                max-width: 250px;
+                height: auto;
+                max-height: 80vh;
+                z-index: 100;
+            }
+
+            .side-panel.collapsed {
+                transform: translateX(calc(100% + 20px));
+            }
+
+            .toggle-panel {
+                left: -35px;
+                padding: 8px;
+            }
+
+            .action-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .action-button {
+                flex: 1;
+                min-width: 40px;
+            }
         }
     </style>
 </head>
@@ -188,26 +285,38 @@
             <canvas id="gameCanvas"></canvas>
             <div id="statsOverlay" class="overlay">
                 <div class="stat-row">
-                    <span class="stat-label">Gen:</span>
-                    <span class="stat-value" id="generationCount">0</span>
+                    Gen: <span id="generationCount">0</span> | 
+                    Pop: <span id="populationCount">0</span>
                 </div>
                 <div class="stat-graph">
-                    <div class="graph-label">Population</div>
-                    <canvas id="populationGraph" width="150" height="40"></canvas>
-                    <span class="stat-value" id="populationCount">0</span>
+                    <canvas id="populationGraph" width="180" height="40"></canvas>
                 </div>
             </div>
         </div>
         <div class="side-panel">
-            <button class="toggle-panel">◀</button>
-            <div class="controls">
-                <button id="startStopBtn">Start</button>
-                <button id="resetBtn">↺</button>
-                <input title="speed" type="range" id="speedControl" min="1" max="100" value="50">
-                <span id="speedValue">50</span>
-                <button id="toggleStatsBtn">Hide Stats</button>
+            <button class="toggle-panel">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                    <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/>
+                </svg>
+            </button>
+            <div class="control-group">
+                <div class="action-buttons">
+                    <button class="action-button" id="startStopBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="M320-200v-560l440 280-440 280Z"/>
+                        </svg>
+                    </button>
+                    <button class="action-button" id="resetBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <input type="range" id="speedControl" min="1" max="100" value="50">
             </div>
-            <div class="theme-selector" id="themeSelector"></div>
+            <div class="control-group">
+                <div id="themeSelector" class="theme-selector"></div>
+            </div>
         </div>
     </div>
 
